@@ -31,11 +31,9 @@ import time
 zoo_ok = False
 class Subscriber:
     """Implementation of the subscriber"""
-    def __init__(self, broker_addr, new_port, zipcode, history):
+    def __init__(self, broker_addr, new_port, zipcode):
         self.broker = broker_addr
         self.zipcode = zipcode
-        self.history = history
-        self.infoID = self.zipcode + '#' + self.history
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.SUB)
         # Connect to broker
@@ -60,7 +58,7 @@ class Subscriber:
             self.socket.connect(self.connect_str)
             # any subscriber must use the SUBSCRIBE to set a subscription, i.e., tell the
             # system what it is interested in
-            self.socket.setsockopt_string(zmq.SUBSCRIBE, self.infoID)
+            self.socket.setsockopt_string(zmq.SUBSCRIBE, self.zipcode)
             global zoo_ok
             zoo_ok = True
         else:
@@ -84,7 +82,6 @@ class Subscriber:
                 print ("Zookeeper is not ready yet, please restart the subscriber later")
 
     def subscribe(self):
-
         # Keep subscribing
         while True:
             @self.zk_object.DataWatch(self.path)
@@ -107,7 +104,7 @@ class Subscriber:
 
             string = self.socket.recv_string()
             zipcode, temperature, relhumidity, ownership, history, pub_time = string.split()
-
+            print(history)
             # total_temp += int(temperature)
             pub_time = float(pub_time.decode('ascii'))
             time_diff = time.time() - pub_time
@@ -122,11 +119,10 @@ if __name__ == '__main__':
     zipcode = sys.argv[1] if len(sys.argv) > 1 else "10001"
     broker = sys.argv[2] if len(sys.argv) > 2 else "127.0.0.1"
     port = sys.argv[3] if len(sys.argv) > 3 else ""
-    my_history = sys.argv[4] if len(sys.argv) > 4 else '5'
     print ('Topic:',zipcode)
     # Python 2 - ascii bytes to unicode str
     if isinstance(zipcode, bytes):
         zipcode = zipcode.decode('ascii')
-    sub = Subscriber(broker, port, zipcode, my_history)
+    sub = Subscriber(broker, port, zipcode)
     if zoo_ok:
         sub.subscribe()
