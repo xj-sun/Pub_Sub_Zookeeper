@@ -32,10 +32,10 @@ zoo_ok = False
 
 class Publisher:
     """Implementation of a publisher"""
-    def __init__(self, broker_addr, ownership_strength):
+    def __init__(self, broker_addr, ownership_strength, history):
         self.broker = broker_addr
         self.strength = ownership_strength
-
+        self.history = history
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.PUB)
         # Connet to the broker
@@ -62,7 +62,6 @@ class Publisher:
 
     def publish(self,zipcode):
         # Keep publishing
-        history = 3
         zipcode = int(zipcode.decode('ascii'))
         while True:
             @self.zk_object.DataWatch(self.path)
@@ -88,7 +87,7 @@ class Publisher:
             relhumidity = randrange(10, 60)
             #print ("Sending: %i %i %i" % (zipcode, temperature, relhumidity))
             pub_timestamp = time.time()
-            self.socket.send_string("%i %i %i %i %i %i" % (zipcode, temperature, relhumidity, self.strength, history, pub_timestamp))
+            self.socket.send_string("%i %i %i %i %i %i" % (zipcode, temperature, relhumidity, self.strength, self.history, pub_timestamp))
             # print("publisher time is: ", pub_timestamp)
             time.sleep(1)
 
@@ -100,8 +99,9 @@ if __name__ == '__main__':
     strength = int(sys.argv[1]) if len(sys.argv) > 1 else 2
     zipcode = sys.argv[2] if len(sys.argv) > 2 else '10001'
     broker = sys.argv[3] if len(sys.argv) > 3 else "127.0.0.1"
+    history = int(sys.argv[4]) if len(sys.argv) > 4 else 7
     print('Topic:',zipcode)
-    pub = Publisher(broker,strength)
+    pub = Publisher(broker,strength, history)
     if zoo_ok:
         print( "--Start publishing--")
         pub.publish(zipcode)
