@@ -155,6 +155,7 @@ class Proxy:
 
         if self.xpubsocket in events:  # a subscriber comes here
             msg = self.xpubsocket.recv_multipart()
+            print(msg)
             tem = msg.split("#")
             print('i am sub, my msg is {}'.format(tem[1]))
             self.xsubsocket.send_multipart(tem[0])
