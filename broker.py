@@ -42,6 +42,7 @@ class Proxy:
         self.poller = zmq.Poller()
         self.poller.register(self.xsubsocket, zmq.POLLIN)
         self.poller.register(self.xpubsocket, zmq.POLLIN)
+        self.sub_his_dic = {}
 
         self.global_url = 0
         self.global_port = 0
@@ -108,7 +109,6 @@ class Proxy:
             self.zk_object.create(self.leader_node, ephemeral=True)
         self.zk_object.set(self.leader_node, self.leader)
 
-
     def history_vector(self, h_vec, ind, history, msg):
         if len(h_vec[ind]) < history:
             h_vec[ind].append(msg)
@@ -155,7 +155,9 @@ class Proxy:
 
         if self.xpubsocket in events:  # a subscriber comes here
             msg = self.xpubsocket.recv_multipart()
-            self.xsubsocket.send_multipart(msg)
+            tem = msg.split("#")
+            print('i am sub, my msg is {}'.format(tem[1]))
+            self.xsubsocket.send_multipart(tem[0])
 
     def scheduleInTopic(self, info, msg):
         [cur_strength, pre_strength, count, history_vec, strengh_vec, pubInd, pre_msg, cur_msg] = info
