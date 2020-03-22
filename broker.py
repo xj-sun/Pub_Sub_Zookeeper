@@ -125,7 +125,11 @@ class Proxy:
             content = msg[0]
             zipcode, temperature, relhumidity, ownership, history, pub_time = content.split(" ")
 
-            if zipcode not in self.zip_list:  # a new topic just come from a new publisher
+            # if there is a new topic add the topic to the topic list and initialize the history vector fot this topic
+            # if the topic already in the topic list update the information of the topic if the ownership is larger than the current ownership
+            # update history vector fot the topic
+
+            if zipcode not in self.zip_list:
                 self.zip_list.append(zipcode)
                 # for this topic, set initial informations for the ownership and history function
                 cur_strength = 0
@@ -162,7 +166,10 @@ class Proxy:
 
         ownership = int(ownership.decode('ascii'))
         history = int(history.decode('ascii'))
+
         # creat the history stock for each publisher, should be FIFO
+        # if the ownership is new add the topic information to history vector
+        # otherwise update the information
         if ownership not in strengh_vec:
             strengh_vec.append(ownership)
             # create list for this publisher
@@ -190,7 +197,7 @@ class Proxy:
                 cur_msg = pre_msg
                 count = 0
 
-        # update the info vector fro this topic
+        # update the info vector fro this topic to make sure the current information always comes from the publisher with strongest ownership
         info[0] = cur_strength
         info[1] = pre_strength
         info[2] = count
