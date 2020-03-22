@@ -108,28 +108,6 @@ class Proxy:
             self.zk_object.create(self.leader_node, ephemeral=True)
         self.zk_object.set(self.leader_node, self.leader)
 
-        self.history_node = '/history/node'
-
-        # Now threading1 runs regardless of user input
-        self.threading1 = threading.Thread(target=self.background_input)
-        self.threading1.daemon = True
-        self.threading1.start()
-
-    def background_input(self):
-        print("--- Enter to send history ---")
-        while True:
-            addr_input = raw_input()
-            if addr_input == "":
-                @self.zk_object.DataWatch(self.history_node)
-                def watch_node(data, stat, event):
-                    if event == None:  # wait for event to be alive and None(stable)
-                        data, stat = self.zk_object.get(self.history_node)
-                        print("Get a new subscriber here")
-                        address = data.split(",")
-                        pub_url = "tcp://" + address[0] + ":" + address[1]
-                        self.global_port = address[1]
-                        self.global_url = pub_url
-                        self.newSub = True
 
     def history_vector(self, h_vec, ind, history, msg):
         if len(h_vec[ind]) < history:
@@ -169,27 +147,7 @@ class Proxy:
                 zipInd = self.zip_list.index(zipcode)
                 topic_msg, histry_msg, ownership, strengh_vec = self.scheduleInTopic(self.topic_info_queue[zipInd], msg)
 
-            if self.newSub:  # Want to send the history message here when only the new subscriber is active
-                ctx = zmq.Context()
-                pub = ctx.socket(zmq.PUB)
-                pub.bind(self.global_url)
-                if ownership == max(strengh_vec):
-                    curInd = strengh_vec.index(ownership)
-                    time.sleep(1)
-                    for i in range(len(histry_msg)):
-                        pub.send_multipart(histry_msg[i])
-                        # pub.send_multipart(['10001, 0, 0, 0, 0']) # a test message
-                        time.sleep(0.2)
-                pub.unbind(self.global_url)
-                pub.close()
-                ctx.term()
-                xurl = "tcp://*:" + self.global_port
-                self.xpubsocket.bind(xurl)
-                self.newSub = False
-                print("--- Sent HISTORY ---")
-                print("--- Enter to send history ---")
-            else:
-                self.xpubsocket.send_multipart(topic_msg)  # send the message by xpub
+            self.xpubsocket.send_multipart(topic_msg)  # send the message by xpub
 
         if self.xpubsocket in events:  # a subscriber comes here
             msg = self.xpubsocket.recv_multipart()
