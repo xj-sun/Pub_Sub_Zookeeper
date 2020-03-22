@@ -81,7 +81,7 @@ class Subscriber:
             else:
                 print ("Zookeeper is not ready yet, please restart the subscriber later")
 
-    def subscribe(self):
+    def subscribe(self, history):
         # Keep subscribing
         while True:
             @self.zk_object.DataWatch(self.path)
@@ -103,13 +103,20 @@ class Subscriber:
                             self.socket.connect(self.connect_str)
 
             string = self.socket.recv_string()
-            zipcode, temperature, relhumidity, ownership, history, pub_time = string.split()
-            print(history)
-            # total_temp += int(temperature)
-            pub_time = float(pub_time.decode('ascii'))
-            time_diff = time.time() - pub_time
-            print ("The time difference is: ", time_diff)
-            print (string)
+            zipcode, temperature, relhumidity, ownership, his, pub_time = string.split()
+            if history > 0:
+                if history == int(his):
+                    # total_temp += int(temperature)
+                    pub_time = float(pub_time.decode('ascii'))
+                    time_diff = time.time() - pub_time
+                    print("The time difference is: ", time_diff)
+                    print(string)
+            else:
+                # total_temp += int(temperature)
+                pub_time = float(pub_time.decode('ascii'))
+                time_diff = time.time() - pub_time
+                print ("The time difference is: ", time_diff)
+                print (string)
 
     def close(self):
         """ This method closes the PyZMQ socket. """
@@ -117,12 +124,13 @@ class Subscriber:
 
 if __name__ == '__main__':
     zipcode = sys.argv[1] if len(sys.argv) > 1 else "10001"
-    broker = sys.argv[2] if len(sys.argv) > 2 else "127.0.0.1"
+    broker = sys.argv[4] if len(sys.argv) > 4 else "127.0.0.1"
     port = sys.argv[3] if len(sys.argv) > 3 else ""
+    history = int(sys.argv[2]) if len(sys.argv) > 2 else 0
     print ('Topic:',zipcode)
     # Python 2 - ascii bytes to unicode str
     if isinstance(zipcode, bytes):
         zipcode = zipcode.decode('ascii')
     sub = Subscriber(broker, port, zipcode)
     if zoo_ok:
-        sub.subscribe()
+        sub.subscribe(history)
