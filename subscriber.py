@@ -82,6 +82,7 @@ class Subscriber:
                 print ("Zookeeper is not ready yet, please restart the subscriber later")
 
     def subscribe(self, history):
+        sendTime = time.time()
         # Keep subscribing
         while True:
             @self.zk_object.DataWatch(self.path)
@@ -103,20 +104,18 @@ class Subscriber:
                             self.socket.connect(self.connect_str)
 
             string = self.socket.recv_string()
-            zipcode, temperature, relhumidity, ownership, his, pub_time = string.split()
-            if history > 0:
-                if history == int(his):
-                    # total_temp += int(temperature)
-                    pub_time = float(pub_time.decode('ascii'))
-                    time_diff = time.time() - pub_time
-                    print("The time difference is: ", time_diff)
-                    print(string)
-            else:
-                # total_temp += int(temperature)
-                pub_time = float(pub_time.decode('ascii'))
-                time_diff = time.time() - pub_time
-                print ("The time difference is: ", time_diff)
-                print (string)
+            infor = string.split('/')
+            if len(infor) > history:
+                msg = infor[: max(1,history)]
+                print(msg)
+                recTime = time.time()
+                logFile = '/home/baozi/Desktop/timeLog.txt'
+                f = open(logFile, "a")
+                f.write("My topic is {}, My history size is {}, my sending time and receive time is {}/{}, my time dif is {}\n".
+                        format(zipcode, history, sendTime, recTime, recTime-sendTime))
+                f.close()
+                print('writing.......')
+
 
     def close(self):
         """ This method closes the PyZMQ socket. """

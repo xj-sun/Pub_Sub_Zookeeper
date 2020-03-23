@@ -98,8 +98,8 @@ class Publisher:
 if __name__ == '__main__':
     strength = int(sys.argv[1]) if len(sys.argv) > 1 else 2
     zipcode = sys.argv[2] if len(sys.argv) > 2 else '10001'
-    broker = sys.argv[3] if len(sys.argv) > 3 else "127.0.0.1"
-    history = int(sys.argv[4]) if len(sys.argv) > 4 else 7
+    broker = sys.argv[4] if len(sys.argv) > 4 else "127.0.0.1"
+    history = int(sys.argv[3]) if len(sys.argv) > 3 else 7
     print('Topic:',zipcode)
     pub = Publisher(broker,strength, history)
     if zoo_ok:

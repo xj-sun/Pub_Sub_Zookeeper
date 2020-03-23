@@ -44,10 +44,6 @@ class Proxy:
         self.poller.register(self.xpubsocket, zmq.POLLIN)
         self.sub_his_dic = {}
 
-        self.global_url = 0
-        self.global_port = 0
-        self.newSub = False
-
         self.topic_info_queue = []  # the content queue for different topic (zipcode)
         self.topicInd = 0
         self.zip_list = []  # the ziplist to keep track with the zipcodes received
@@ -150,8 +146,20 @@ class Proxy:
             else:
                 zipInd = self.zip_list.index(zipcode)
                 topic_msg, histry_msg, ownership, strengh_vec = self.scheduleInTopic(self.topic_info_queue[zipInd], msg)
+            zipInd = self.zip_list.index(zipcode)
+            msg = self.topic_info_queue[zipInd][3][0]
+            msg  = topic_msg + msg
+            carry = []
+            for contex in msg:
+                carry.append(contex[0])
+                carry.append('/')
 
-            self.xpubsocket.send_multipart(topic_msg)  # send the message by xpub
+            carry = list(carry[2:])
+
+            res = ['']
+            for _ in carry:
+                res[-1] += _
+            self.xpubsocket.send_multipart([res[0]])  # send the message by xpub
 
         if self.xpubsocket in events:  # a subscriber comes here
             msg1 = self.xpubsocket.recv_multipart()
